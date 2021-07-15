@@ -19,7 +19,7 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>18</version>
-    <relativePath /> <!-- resolve from repository -->
+    <relativePath/> <!-- resolve from repository -->
   </parent>
 
   <artifactId>ratis</artifactId>
@@ -496,7 +496,7 @@
       <dependency>
         <groupId>javax.annotation</groupId>
         <artifactId>javax.annotation-api</artifactId>
-        <version>1.2</version>
+        <version>1.3.2</version>
       </dependency>
 
       <dependency>
