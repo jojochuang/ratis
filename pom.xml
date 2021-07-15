@@ -19,7 +19,7 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>18</version>
-    <relativePath /> <!-- resolve from repository -->
+    <relativePath/> <!-- resolve from repository -->
   </parent>
 
   <artifactId>ratis</artifactId>
@@ -202,7 +202,7 @@
     <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
     <build-helper-maven-plugin.version>1.9</build-helper-maven-plugin.version>
     <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
-    <spotbugs.version>4.2.1</spotbugs.version>
+    <spotbugs.version>4.2.3</spotbugs.version>
     <spotbugs-plugin.version>4.2.0</spotbugs-plugin.version>
     <wagon-ssh.version>1.0</wagon-ssh.version>
 
