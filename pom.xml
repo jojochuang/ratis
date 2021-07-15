@@ -19,7 +19,7 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>18</version>
-    <relativePath /> <!-- resolve from repository -->
+    <relativePath/> <!-- resolve from repository -->
   </parent>
 
   <artifactId>ratis</artifactId>
@@ -241,7 +241,7 @@
     <checkstyle.version>8.18</checkstyle.version>
 
     <!--metrics-->
-    <dropwizard.version>3.2.5</dropwizard.version>
+    <dropwizard.version>3.2.6</dropwizard.version>
 
     <!-- commons lang version -->
     <commons.lang.version>3.8.1</commons.lang.version>
