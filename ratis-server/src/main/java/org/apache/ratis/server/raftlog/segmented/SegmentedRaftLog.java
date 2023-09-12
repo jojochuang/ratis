@@ -294,10 +294,18 @@ public class SegmentedRaftLog extends RaftLogBase {
     try {
       CompletableFuture<ByteString> future = null;
       if (stateMachine != null) {
-        future = stateMachine.data().read(entry).exceptionally(ex -> {
-          stateMachine.event().notifyLogFailed(ex, entry);
-          throw new CompletionException("Failed to read state machine data for log entry " + entry, ex);
-        });
+        Timer.Context timerContext =
+            getRaftLogMetrics().getStateMachineDataReadTimer().time();
+        future = stateMachine.data().read(entry)
+            .whenComplete((v, e) -> {
+              if (timerContext != null) {
+                timerContext.stop();
+              }
+            })
+            .exceptionally(ex -> {
+              stateMachine.event().notifyLogFailed(ex, entry);
+              throw new CompletionException("Failed to read state machine data for log entry " + entry, ex);
+            });
       }
       return newEntryWithData(entry, future);
     } catch (Exception e) {

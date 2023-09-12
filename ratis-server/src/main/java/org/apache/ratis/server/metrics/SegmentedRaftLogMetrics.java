@@ -72,6 +72,12 @@ public class SegmentedRaftLogMetrics extends RaftLogMetricsBase {
   /** Number of statemachine dataApi read timeouts */
   public static final String RAFT_LOG_STATEMACHINE_DATA_READ_TIMEOUT_COUNT = "numStateMachineDataReadTimeout";
 
+  /** Time required to read state machine data */
+  public static final String RAFT_LOG_STATEMACHINE_DATA_READ_LATENCY = "readStateMachineDataLatency";
+
+  /** Time required to write state machine data */
+  public static final String RAFT_LOG_STATEMACHINE_DATA_WRITE_LATENCY = "writeStateMachineDataLatency";
+
   //////////////////////////////
   // Raft Log Read Path Metrics
   /////////////////////////////
@@ -177,5 +183,13 @@ public class SegmentedRaftLogMetrics extends RaftLogMetricsBase {
   @Override
   public void onStateMachineDataReadTimeout() {
     registry.counter(RAFT_LOG_STATEMACHINE_DATA_READ_TIMEOUT_COUNT).inc();
+  }
+
+  public Timer getStateMachineDataReadTimer() {
+    return getTimer(RAFT_LOG_STATEMACHINE_DATA_READ_LATENCY);
+  }
+
+  public Timer getStateMachineDataWriteTimer() {
+    return getTimer(RAFT_LOG_STATEMACHINE_DATA_WRITE_LATENCY);
   }
 }
