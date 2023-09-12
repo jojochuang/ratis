@@ -516,13 +516,20 @@ class SegmentedRaftLogWorker {
           this.stateMachineFuture = null;
         }
       } else {
+        Timer.Context timerContext =
+            raftLogMetrics.getStateMachineDataWriteTimer().time();
         try {
+
           // this.entry != entry iff the entry has state machine data
           this.stateMachineFuture = stateMachine.data().write(entry);
         } catch (Exception e) {
           LOG.error(name + ": writeStateMachineData failed for index " + entry.getIndex()
               + ", entry=" + LogProtoUtils.toLogEntryString(entry, stateMachine::toStateMachineLogEntryString), e);
           throw e;
+        } finally {
+          if (timerContext != null) {
+            timerContext.stop();
+          }
         }
       }
       this.combined = stateMachineFuture == null? super.getFuture()
