@@ -239,12 +239,14 @@ class StateMachineUpdater implements Runnable {
           LOG.debug("{}: applying nextIndex={}", this, nextIndex);
         }
 
+        Timer.Context applyTransactionTimerContext = stateMachineMetrics.get().getApplyTransactionTimer().time();
         final CompletableFuture<Message> f = server.applyLogToStateMachine(next);
         final long incremented = appliedIndex.incrementAndGet(debugIndexChange);
         Preconditions.assertTrue(incremented == nextIndex);
         if (f != null) {
           futures.get().add(f);
-          f.thenAccept(m -> notifyAppliedIndex(incremented));
+          f.thenAccept(m -> notifyAppliedIndex(incremented))
+              .thenAccept( m -> applyTransactionTimerContext.stop());
         }
       } else {
         LOG.debug("{}: logEntry {} is null. There may be snapshot to load. state:{}",

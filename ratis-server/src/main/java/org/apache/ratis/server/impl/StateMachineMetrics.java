@@ -40,6 +40,8 @@ public final class StateMachineMetrics extends RatisMetrics {
   public static final String STATEMACHINE_APPLY_COMPLETED_GAUGE = "applyCompletedIndex";
   public static final String STATEMACHINE_TAKE_SNAPSHOT_TIMER = "takeSnapshot";
 
+  public static final String STATEMACHINE_APPLY_TRANSACTION_TIMER = "applyTransaction";
+
   public static StateMachineMetrics getStateMachineMetrics(
       RaftServerImpl server, RaftLogIndex appliedIndex,
       StateMachine stateMachine) {
@@ -70,6 +72,10 @@ public final class StateMachineMetrics extends RatisMetrics {
 
   public Timer getTakeSnapshotTimer() {
     return registry.timer(STATEMACHINE_TAKE_SNAPSHOT_TIMER);
+  }
+
+  public Timer getApplyTransactionTimer() {
+    return registry.timer(STATEMACHINE_APPLY_TRANSACTION_TIMER);
   }
 
 }
