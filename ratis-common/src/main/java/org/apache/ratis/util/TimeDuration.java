@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.LongUnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * Time duration is represented by a long together with a {@link TimeUnit}.
@@ -57,6 +58,22 @@ public final class TimeDuration implements Comparable<TimeDuration> {
     final int ordinal = unit.ordinal();
     final TimeUnit[] timeUnits = TimeUnit.values();
     return ordinal == timeUnits.length - 1? unit: timeUnits[ordinal + 1];
+  }
+
+  /** @return the minimum of the given parameters. */
+  public static TimeDuration min(TimeDuration left, TimeDuration right) {
+    Objects.requireNonNull(left, "left == null");
+    Objects.requireNonNull(right, "right == null");
+    return Stream.of(left, right).min(TimeDuration::compareTo).orElseThrow(
+        () -> new IllegalStateException("Failed to compute min(" + left + ", " + right + ")"));
+  }
+
+  /** @return the maximum of the given parameters. */
+  public static TimeDuration max(TimeDuration left, TimeDuration right) {
+    Objects.requireNonNull(left, "left == null");
+    Objects.requireNonNull(right, "right == null");
+    return Stream.of(left, right).max(TimeDuration::compareTo).orElseThrow(
+        () -> new IllegalStateException("Failed to compute max(" + left + ", " + right + ")"));
   }
 
   /** Abbreviations of {@link TimeUnit}. */
@@ -295,9 +312,19 @@ public final class TimeDuration implements Comparable<TimeDuration> {
     return function.apply(getDuration(), getUnit());
   }
 
-  /** @return Is this {@link TimeDuration} negative? */
+  /** @return Is this {@link TimeDuration} less than zero? */
   public boolean isNegative() {
     return duration < 0;
+  }
+
+  /** @return Is this {@link TimeDuration} greater than or equal to zero? */
+  public boolean isNonNegative() {
+    return duration >= 0;
+  }
+
+  /** @return Is this {@link TimeDuration} greater than zero? */
+  public boolean isPositive() {
+    return duration > 0;
   }
 
   /** @return Is this {@link TimeDuration} less than or equal to zero? */
