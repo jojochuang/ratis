@@ -19,7 +19,7 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>18</version>
-    <relativePath /> <!-- resolve from repository -->
+    <relativePath/> <!-- resolve from repository -->
   </parent>
 
   <artifactId>ratis</artifactId>
@@ -215,7 +215,7 @@
 
     <shell-executable>bash</shell-executable>
 
-    <hadoop.version>3.1.1</hadoop.version>
+    <hadoop.version>3.1.2</hadoop.version>
     <hadoop-maven-plugins.version>${hadoop.version}</hadoop-maven-plugins.version>
 
     <!-- define the Java language version used by the compiler -->
