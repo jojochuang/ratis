@@ -158,7 +158,8 @@ public interface ClientProtoUtils {
         request.isToLeader(),
         request.getSlidingWindowEntry(),
         request.getRoutingTable(),
-        request.getTimeoutMs());
+        request.getTimeoutMs())
+        .addAllRepliedCallIds(request.getRepliedCallIds());
   }
 
   static RaftClientRequest.Type toRaftClientRequestType(RaftClientRequestProto p) {
@@ -217,6 +218,7 @@ public interface ClientProtoUtils {
         .setMessage(toMessage(p.getMessage()))
         .setType(type)
         .setSlidingWindowEntry(request.getSlidingWindowEntry())
+        .setRepliedCallIds(request.getRepliedCallIdsList())
         .setRoutingTable(getRoutingTable(request))
         .setTimeoutMs(request.getTimeoutMs())
         .build();

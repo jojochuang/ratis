@@ -21,7 +21,9 @@ import org.apache.ratis.proto.RaftProtos.*;
 import org.apache.ratis.util.Preconditions;
 import org.apache.ratis.util.ProtoUtils;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.apache.ratis.proto.RaftProtos.RaftClientRequestProto.TypeCase.*;
 
@@ -239,6 +241,7 @@ public class RaftClientRequest extends RaftClientMessage {
     private RaftGroupId groupId;
     private long callId;
     private boolean toLeader;
+    private Iterable<Long> repliedCallIds = Collections.emptyList();
 
     private Message message;
     private Type type;
@@ -248,7 +251,8 @@ public class RaftClientRequest extends RaftClientMessage {
 
     public RaftClientRequest build() {
       return new RaftClientRequest(
-          clientId, serverId, groupId, callId, toLeader, message, type, slidingWindowEntry, routingTable, timeoutMs);
+          clientId, serverId, groupId, callId, toLeader, message, type, slidingWindowEntry, routingTable, timeoutMs,
+          repliedCallIds);
     }
 
     public Builder setClientId(ClientId clientId) {
@@ -275,6 +279,11 @@ public class RaftClientRequest extends RaftClientMessage {
 
     public Builder setCallId(long callId) {
       this.callId = callId;
+      return this;
+    }
+
+    public Builder setRepliedCallIds(Iterable<Long> repliedCallIds) {
+      this.repliedCallIds = repliedCallIds;
       return this;
     }
 
@@ -324,6 +333,7 @@ public class RaftClientRequest extends RaftClientMessage {
   private final Message message;
   private final Type type;
 
+  private final Iterable<Long> repliedCallIds;
   private final SlidingWindowEntry slidingWindowEntry;
 
   private final RoutingTable routingTable;
@@ -334,24 +344,25 @@ public class RaftClientRequest extends RaftClientMessage {
 
   protected RaftClientRequest(ClientId clientId, RaftPeerId serverId, RaftGroupId groupId, long callId,
       boolean toLeader, Type type) {
-    this(clientId, serverId, groupId, callId, toLeader, null, type, null, null, 0);
+    this(clientId, serverId, groupId, callId, toLeader, null, type, null, null, 0, Collections.emptyList());
   }
 
   protected RaftClientRequest(ClientId clientId, RaftPeerId serverId, RaftGroupId groupId, long callId, Type type,
       long timeoutMs) {
-    this(clientId, serverId, groupId, callId, true, null, type, null, null, timeoutMs);
+    this(clientId, serverId, groupId, callId, true, null, type, null, null, timeoutMs, Collections.emptyList());
   }
 
   @SuppressWarnings("parameternumber")
   private RaftClientRequest(
       ClientId clientId, RaftPeerId serverId, RaftGroupId groupId,
       long callId, boolean toLeader, Message message, Type type, SlidingWindowEntry slidingWindowEntry,
-      RoutingTable routingTable, long timeoutMs) {
+      RoutingTable routingTable, long timeoutMs, Iterable<Long> repliedCallIds) {
     super(clientId, serverId, groupId, callId);
     this.toLeader = toLeader;
 
     this.message = message;
     this.type = type;
+    this.repliedCallIds = repliedCallIds != null ? repliedCallIds : Collections.emptyList();
     this.slidingWindowEntry = slidingWindowEntry != null? slidingWindowEntry: SlidingWindowEntry.getDefaultInstance();
     this.routingTable = routingTable;
     this.timeoutMs = timeoutMs;
@@ -364,6 +375,10 @@ public class RaftClientRequest extends RaftClientMessage {
 
   public boolean isToLeader() {
     return toLeader;
+  }
+
+  public Iterable<Long> getRepliedCallIds() {
+    return repliedCallIds;
   }
 
   public SlidingWindowEntry getSlidingWindowEntry() {

@@ -836,6 +836,7 @@ class RaftServerImpl implements RaftServer.Division,
   public CompletableFuture<RaftClientReply> submitClientRequestAsync(
       RaftClientRequest request) throws IOException {
     assertLifeCycleState(LifeCycle.States.RUNNING);
+    retryCache.invalidateRepliedRequests(request);
     LOG.debug("{}: receive client request({})", getMemberId(), request);
     final Optional<Timer> timer = Optional.ofNullable(raftServerMetrics.getClientRequestTimer(request.getType()));
 
@@ -1723,7 +1724,7 @@ class RaftServerImpl implements RaftServer.Division,
     final ClientInvocationId invocationId = ClientInvocationId.valueOf(logEntry.getStateMachineLogEntry());
     // update the retry cache
     final CacheEntry cacheEntry = retryCache.getOrCreateEntry(invocationId);
-    Preconditions.assertTrue(cacheEntry != null);
+    Objects.requireNonNull(cacheEntry , "cacheEntry == null");
     if (getInfo().isLeader() && cacheEntry.isCompletedNormally()) {
       LOG.warn("{} retry cache entry of leader should be pending: {}", this, cacheEntry);
     }
