@@ -19,7 +19,7 @@
 # See BUILDING.txt.
 
 
-FROM ubuntu:xenial
+FROM ubuntu:xenial-20201014
 
 WORKDIR /root
 
