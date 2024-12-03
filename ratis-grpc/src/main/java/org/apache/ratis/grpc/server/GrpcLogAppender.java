@@ -401,7 +401,7 @@ public class GrpcLogAppender extends LogAppenderBase {
 
     final TimeDuration remaining = getRemainingWaitTime();
     if (remaining.isPositive()) {
-      sleep(remaining, heartbeat);
+      LockSupport.parkNanos(remaining.toLong(TimeUnit.NANOSECONDS));
     }
     if (isRunning()) {
       sendRequest(request, pending);
