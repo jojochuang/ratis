@@ -181,7 +181,7 @@ class LeaderStateImpl implements LeaderState {
 
     void submit(StateUpdateEvent event) {
       RingBuffer<StateUpdateEvent> ringBuffer = disruptor.getRingBuffer();
-      ringBuffer.publishEvent((event1, sequence) -> event1.set(event));
+      ringBuffer.publishEvent((event1, sequence, ev) -> event1.set(event), event);
     }
 
 
