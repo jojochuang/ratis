@@ -442,6 +442,11 @@
         <version>6.0.53</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+        <groupId>com.lmax</groupId>
+        <artifactId>disruptor</artifactId>
+        <version>4.0.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

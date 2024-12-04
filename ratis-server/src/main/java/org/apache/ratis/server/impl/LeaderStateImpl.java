@@ -17,6 +17,10 @@
  */
 package org.apache.ratis.server.impl;
 
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.dsl.Disruptor;
+
+import com.lmax.disruptor.util.DaemonThreadFactory;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.proto.RaftProtos;
 import org.apache.ratis.proto.RaftProtos.AppendEntriesRequestProto;
@@ -52,7 +56,6 @@ import org.apache.ratis.server.raftlog.RaftLog;
 import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.util.CodeInjectionForTesting;
 import org.apache.ratis.util.CollectionUtils;
-import org.apache.ratis.util.Daemon;
 import org.apache.ratis.util.JavaUtils;
 import org.apache.ratis.util.MemoizedSupplier;
 import org.apache.ratis.util.Preconditions;
@@ -72,8 +75,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,14 +111,23 @@ class LeaderStateImpl implements LeaderState {
       STEP_DOWN, UPDATE_COMMIT, CHECK_STAGING
     }
 
-    private final Type type;
-    private final long newTerm;
-    private final Runnable handler;
+    private Type type;
+    private long newTerm;
+    private Runnable handler;
+
+    StateUpdateEvent() {
+    }
 
     StateUpdateEvent(Type type, long newTerm, Runnable handler) {
       this.type = type;
       this.newTerm = newTerm;
       this.handler = handler;
+    }
+
+    void set(StateUpdateEvent other) {
+      this.type = other.type;
+      this.newTerm = other.newTerm;
+      this.handler = other.handler;
     }
 
     void execute() {
@@ -148,40 +158,32 @@ class LeaderStateImpl implements LeaderState {
 
   private class EventQueue {
     private final String name = server.getMemberId() + "-" + JavaUtils.getClassSimpleName(getClass());
-    private final BlockingQueue<StateUpdateEvent> queue = new ArrayBlockingQueue<>(4096);
+
+    Disruptor<StateUpdateEvent> disruptor = new Disruptor<>(
+        StateUpdateEvent::new, 4096, DaemonThreadFactory.INSTANCE);
+
+    EventQueue() {
+      disruptor.handleEventsWith((event, sequence, endOfBatch) -> {
+        synchronized(server) {
+          if (isRunning()) {
+            if (event != null) {
+              event.execute();
+            } else if (inStagingState()) {
+              checkStaging();
+            } else if (checkLeadership()) {
+              checkPeersForYieldingLeader();
+            }
+          }
+        }
+      });
+      disruptor.start();
+    }
 
     void submit(StateUpdateEvent event) {
-      try {
-        queue.put(event);
-      } catch (InterruptedException e) {
-        LOG.info("{}: Interrupted when submitting {} ", this, event);
-        Thread.currentThread().interrupt();
-      }
+      RingBuffer<StateUpdateEvent> ringBuffer = disruptor.getRingBuffer();
+      ringBuffer.publishEvent((event1, sequence) -> event1.set(event));
     }
 
-    StateUpdateEvent poll() {
-      final StateUpdateEvent e;
-      try {
-        e = queue.poll(server.getMaxTimeoutMs(), TimeUnit.MILLISECONDS);
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-        String s = this + ": poll() is interrupted";
-        if (isStopped.get()) {
-          LOG.info(s + " gracefully");
-          return null;
-        } else {
-          throw new IllegalStateException(s + " UNEXPECTEDLY", ie);
-        }
-      }
-
-      if (e != null) {
-        // remove duplicated events from the head.
-        while(e.equals(queue.peek())) {
-          queue.poll();
-        }
-      }
-      return e;
-    }
 
     @Override
     public String toString() {
@@ -341,7 +343,6 @@ class LeaderStateImpl implements LeaderState {
    */
   private final SenderList senders;
   private final EventQueue eventQueue;
-  private final EventProcessor processor;
   private final PendingRequests pendingRequests;
   private final WatchRequests watchRequests;
   private final MessageStreamRequests messageStreamRequests;
@@ -371,7 +372,6 @@ class LeaderStateImpl implements LeaderState {
     this.currentTerm = state.getCurrentTerm();
 
     this.eventQueue = new EventQueue();
-    processor = new EventProcessor(this.name, server);
     raftServerMetrics = server.getRaftServerMetrics();
     logAppenderMetrics = new LogAppenderMetrics(server.getMemberId());
     this.pendingRequests = new PendingRequests(server.getMemberId(), properties, raftServerMetrics);
@@ -414,7 +414,7 @@ class LeaderStateImpl implements LeaderState {
         server.getId().toString(), null);
     // Initialize startup log entry and append it to the RaftLog
     startupLogEntry.get();
-    processor.start();
+    //processor.start();
     senders.forEach(LogAppender::start);
   }
 
@@ -742,37 +742,6 @@ class LeaderStateImpl implements LeaderState {
           // the configuration is in transitional state, and has been committed
           // so it is time to generate and replicate (new) conf.
           replicateNewConf();
-        }
-      }
-    }
-  }
-
-  /**
-   * The processor thread takes the responsibility to update the raft server's
-   * state, such as changing to follower, or updating the committed index.
-   */
-  private class EventProcessor extends Daemon {
-    public EventProcessor(String name, RaftServerImpl server) {
-      super(Daemon.newBuilder()
-          .setName(name).setThreadGroup(server.getThreadGroup()));
-    }
-    @Override
-    public void run() {
-      // apply an empty message; check if necessary to replicate (new) conf
-      prepare();
-
-      while (isRunning()) {
-        final StateUpdateEvent event = eventQueue.poll();
-        synchronized(server) {
-          if (isRunning()) {
-            if (event != null) {
-              event.execute();
-            } else if (inStagingState()) {
-              checkStaging();
-            } else if (checkLeadership()) {
-              checkPeersForYieldingLeader();
-            }
-          }
         }
       }
     }

@@ -109,5 +109,9 @@
       <artifactId>ratis-metrics-default</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.lmax</groupId>
+      <artifactId>disruptor</artifactId>
+    </dependency>
   </dependencies>
 </project>
