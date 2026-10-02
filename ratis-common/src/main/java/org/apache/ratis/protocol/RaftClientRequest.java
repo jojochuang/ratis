@@ -197,6 +197,22 @@ public class RaftClientRequest extends RaftClientMessage {
       return (WatchRequestTypeProto)proto;
     }
 
+    public boolean isReadOnly() {
+      switch (getTypeCase()) {
+        case READ:
+        case STALEREAD:
+        case WATCH:
+          return true;
+        case WRITE:
+        case MESSAGESTREAM:
+        case DATASTREAM:
+        case FORWARD:
+          return false;
+        default:
+          throw new IllegalStateException("Unexpected type case: " + getTypeCase());
+      }
+    }
+
     public static String toString(ReplicationLevel replication) {
       return replication == ReplicationLevel.MAJORITY? "": "-" + replication;
     }
