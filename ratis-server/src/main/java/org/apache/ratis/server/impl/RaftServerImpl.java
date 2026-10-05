@@ -873,7 +873,7 @@ class RaftServerImpl implements RaftServer.Division,
         replyFuture = streamAsync(request);
       } else {
         // query the retry cache
-        final RetryCacheImpl.CacheQueryResult queryResult = retryCache.queryCache(ClientInvocationId.valueOf(request));
+        final RetryCacheImpl.CacheQueryResult queryResult = retryCache.queryCache(request);
         final CacheEntry cacheEntry = queryResult.getEntry();
         if (queryResult.isRetry()) {
           // if the previous attempt is still pending or it succeeded, return its
